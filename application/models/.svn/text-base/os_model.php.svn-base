@@ -1,0 +1,198 @@
+<?php
+class Os_model extends CI_Model {
+	private $_os_names = array (
+							7 => 'ios',
+							8 => 'ipad',
+							9 => 'android'
+						);
+						
+    public function __construct()
+    {
+        parent::__construct();
+    }
+	
+	public function get_oses()
+	{
+		$this->db->select('os_id, os_name, os_nice_name, os_market')->from('admin_os');
+		$query = $this->db->get();
+		
+		return $query->result_array();
+	}
+
+	/*
+	 * CRUD avec un item
+	 */
+	public function get_os($id)
+	{
+		$this->db->select('os_id, os_name, os_nice_name, os_market')->from('admin_os')->where('os_id', $id);
+		$query = $this->db->get();
+		
+		return $query->row_array();
+	}
+	public function add_os($data)
+	{
+		$this->db->insert('admin_os', $data);
+	}
+	public function modify_os($id, $data)
+	{
+		$this->db->where('os_id', $id);
+		$this->db->update('admin_os', $data);
+	}
+	public function delete_os($id)
+	{
+		$this->db->delete('admin_os', array('os_id' => $id)); 
+	}
+	
+	/*
+	 * Fonction qui va récupérer les infos (détails) d'une appli
+	 * depuis le store (qu'on lui a passé en paramètres)
+	 */
+	public function get_store_details($infos)
+	{
+		// on récupère le market correspondant à notre os
+		if (isset($infos['os_id']))
+		{
+			$query = $this->db->select('os_market')->from('admin_os')->where('os_id', $infos['os_id'])->get();
+			$os_market = $query->row()->os_market;
+			
+			if ($os_market === 'app_store')
+			{
+				$infos = $this->get_app_store_details($infos);
+			} else if ($os_market === 'android_market') {
+				$infos = $this->get_android_market_details($infos);
+			}
+		}
+				
+		return $infos; // il faut toujours retourner au moins ce qu'on nous a passé
+	}
+	
+	/*
+	 * Getter : name d'un os à partir de l'id
+	 */
+	public function get_os_name($os_id)
+	{
+		if (isset($this->_os_names[$os_id]))
+		{
+			return $this->_os_names[$os_id];
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+
+	/*
+	 * Récupère les infos depuis l'App Store d'Apple,
+	 * les retourne
+	 */
+	public function get_app_store_details($infos)
+	{
+		if ($infos['store_id'] !== '')
+		{
+			$this->load->helper('text');
+				
+			// essayer de protéger ce code avec le file_helper ne marche pas, don't try or forget sleeping
+			$itunes_json = @file_get_contents('http://itunes.apple.com/lookup?country=fr&id='.$infos['store_id']);
+			$app_details = json_decode($itunes_json, TRUE);
+			
+			if (isset($app_details['resultCount']) && ($app_details['resultCount'] == '1'))
+			{
+				$infos['title'] = $app_details['results']['0']['trackName'];
+				$infos['description'] = $app_details['results']['0']['description'];
+				$infos['short_desc'] = substr($infos['description'], 0, 162).'...'; // character_limiter ne marche pas
+				$infos['version'] = $app_details['results']['0']['version'];
+				$infos['price'] = $app_details['results']['0']['price'];
+									
+				// on test s'il y a des votes pour la version en cours, si oui on prend cette note, sinon de toutes les versions
+				$infos['rating'] = ($app_details['results']['0']['userRatingCountForCurrentVersion']>0)? $app_details['results']['0']['averageUserRatingForCurrentVersion']:$app_details['results']['0']['averageUserRating'];
+				$infos['rating_count'] = $app_details['results']['0']['userRatingCount'];
+								
+				$infos['editor'] = $app_details['results']['0']['artistName'];
+				$infos['link'] = $app_details['results']['0']['trackViewUrl']; // on ne sait pas quelle merde l'user a pu rentrer, du coup on reset
+				$infos['thumbnail'] = $app_details['results']['0']['artworkUrl60'];
+				$infos['picture'] = $app_details['results']['0']['artworkUrl512']; // où 100 ?
+				
+				if ($app_details['results']['0']['screenshotUrls'])
+				{
+					$infos['screen_1'] = $app_details['results']['0']['screenshotUrls']['0'];
+					$infos['screen_2'] = $app_details['results']['0']['screenshotUrls']['1'];
+					$infos['screen_3'] = $app_details['results']['0']['screenshotUrls']['2'];
+				} else if ($app_details['results']['0']['ipadScreenshotUrls']) { // si on a pas de screens iPhone, alors on regarde ceux pour iPad
+					$infos['screen_1'] = $app_details['results']['0']['ipadScreenshotUrls']['0'];
+					$infos['screen_2'] = $app_details['results']['0']['ipadScreenshotUrls']['1'];
+					$infos['screen_3'] = $app_details['results']['0']['ipadScreenshotUrls']['2'];
+				}
+				
+				if ($app_details['results']['0']['supportedDevices'] !== array('all'))
+				{
+					$this->session->set_flashdata('message', 'Attention, cette application n\'est compatible qu\'avec '.implode(', ',$app_details['results']['0']['supportedDevices']));
+				}
+			} else {
+				$this->session->set_flashdata('alert', 'D&eacute;sol&eacute;, aucune application correspondante n\'a &eacute;t&eacute; trouv&eacute;e. '.back_button());
+			}
+		}
+
+		return $infos;
+	}
+
+	/*
+	 * Récupère les infos depuis l'Android Market officiel,
+	 * les retourne
+	 */
+	public function get_android_market_details($infos)
+	{
+		if ($infos['store_id'] !== '')
+		{
+			$this->load->library('android_market');	// adaptation de l'API https://github.com/splitfeed/android-market-api-php/
+		
+			$app_details = $this->android_market->get_one_by_id($infos['store_id']);
+				
+			if ($app_details === FALSE)
+			{
+				$this->session->set_flashdata('alert', 'D&eacute;sol&eacute;, aucune application correspondante n\'a &eacute;t&eacute; trouv&eacute;e. '.back_button());
+			} else {
+				$infos['title'] = $app_details->getTitle();
+				$infos['editor'] = $app_details->getCreator();
+				$infos['version'] = $app_details->getVersion();
+				$infos['rating'] = round($app_details->getRating(),1); // par défaut la valeur est très précise, on met ça comme pour l'App Store
+				$infos['rating_count'] = $app_details->getRatingsCount();
+				$infos['price'] = ($app_details->getPrice()=='')?'0':$app_details->getPrice(); // on récupère le prix, cela pourra toujours servir
+				$infos['description'] = $app_details->getExtendedinfo()->getDescription();
+				$infos['short_desc'] = substr($infos['description'], 0, 162).'...'; // character_limiter ne marche pas
+				$infos['link'] = 'https://market.android.com/details?id='.$infos['store_id']; // on ne récupère pas le lien, du coup on la reconstruit
+				
+				$images = $this->get_android_market_images($infos['link'], $infos['store_id']); // récupère les images sous forme d'un tableau, les rajoute à $infos
+				$infos['thumbnail'] = str_replace('124', '78', $images[0]); // version 78px pour l'icône
+				$infos['picture'] = str_replace('124', '512', $images[0]); // version 512px
+				$infos['screen_1'] = (isset($images[1]))?$images[1]:''; // on check si l'image existe, et la récupère
+				$infos['screen_2'] = (isset($images[2]))?$images[2]:''; 
+				$infos['screen_3'] = (isset($images[3]))?$images[3]:''; 
+			}
+		}
+		
+		return $infos;
+	}
+	/*
+	 * Récupère les images en parsant la page Html :
+	 * elles ont beaucoup de variables dans leurs urls (taille de l'image + un n° entre 0 et 10 pseudo-aléatoire), 
+	 * c'est de loin le plus simple
+	 */
+	public function get_android_market_images($link, $store_id)
+	{
+		$page = get_url_contents($link);
+		
+		// on va y aller à coups de regex
+		// on veut une image, donc src
+		// # sont les délimiteurs
+		// .*?" -> s'arrête au 1er "
+		// g\d+ car il y aussi des adresses du type g0, g1...
+		$regex = '# src="(https?://(www|ssl|g\d*).gstatic.com/android/market/'.$store_id.'/.*?)"#';// mon oeuvre
+		$result = array();
+		preg_match_all($regex, $page, $result);
+		
+		// $result[1] contient les résultats capturés, donc les liens
+		return $result[1];
+	}
+
+}
+/* EOF */

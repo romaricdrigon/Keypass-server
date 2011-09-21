@@ -1,0 +1,50 @@
+<?php
+class Form_model extends CI_Model {
+	
+    public function __construct()
+    {
+        parent::__construct();
+    }
+	
+	/*
+	 * Fonctions d'actions, appelées depuis des hits extérieurs par ex.
+	 */
+	// rajoute une demande de contact dans la base
+	public function add_contact($data)
+	{
+		// je ne suis pas sur que CI en 2.0.3 utilise l'objet PDO
+		// donc par méfiance je vais écrire une requête préparée à la mano
+	    $q = "INSERT INTO form_contact (ctc_name, ctc_surname, ctc_email, ctc_message) VALUES (?, ?, ?, ?)";
+	    $to_insert = array($data['name'], $data['surname'], $data['email'], $data['message']);
+	    $q = $this->db->query($q, $to_insert);
+	}
+	// rajoute une demande "bonus" dans la base
+	public function add_bonus($data)
+	{
+		// je ne suis pas sur que CI en 2.0.3 utilise l'objet PDO
+		// donc par méfiance je vais écrire une requête préparée à la mano
+	    $q = "INSERT INTO form_bonus (bns_name, bns_surname, bns_email, bns_update) VALUES (?, ?, ?, ?)";
+	    $to_insert = array($data['name'], $data['surname'], $data['email'], $data['update']);
+	    $q = $this->db->query($q, $to_insert);
+	}
+	// inscrit une adresse e-mail à la newsletter
+	public function subscribe_newsletter($data)
+	{
+		// je ne suis pas sur que CI en 2.0.3 utilise l'objet PDO
+		// donc par méfiance je vais écrire une requête préparée à la mano
+	    $q = "INSERT IGNORE INTO form_newsletter (nws_email, nws_subscribe) VALUES (?, ?)";
+	    $to_insert = array($data['email'], $data['subscribe']);
+	    $q = $this->db->query($q, $to_insert);
+	}
+	// désinscrit une adresse e-mail à la newsletter
+	public function unsubscribe_newsletter($data)
+	{
+		// je ne suis pas sur que CI en 2.0.3 utilise l'objet PDO
+		// donc par méfiance je vais écrire une requête préparée à la mano
+	    $q = "UPDATE IGNORE form_newsletter SET nws_email=?, nws_subscribe=?";
+	    $to_insert = array($data['email'], $data['subscribe']);
+	    $q = $this->db->query($q, $to_insert);
+	}
+
+}
+/* EOF */

@@ -1,0 +1,133 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed'); 
+
+/*
+ * Classe strap, to port library splitfeed-android-market-php
+ * to Code Igniter framework
+ */
+
+class Android_market {
+	private $_session;
+
+    public function __construct()
+    {
+    	// *** logins from an Google account ***
+		define('GOOGLE_EMAIL','kreactive.publishing.user@gmail.com');
+		define('GOOGLE_PASSWD','4ox+to5mrh');
+		// *** a valid device ID (=IMEI in most cases) is needed ***
+		//define('ANDROID_DEVICEID','357238049106789'); // device Samsung
+		define('ANDROID_DEVICEID','012682000136466'); // Sony Ericson XPERIA
+		define('MARKET_LANG','fr'); // iso code
+		define('MARKET_COUNTRY','FR');
+		
+		include("android-market-api-php/proto/protocolbuffers.inc.php");
+		include("android-market-api-php/proto/market.proto.php");
+		include("android-market-api-php/Market/MarketSession.php");
+		
+		$this->_session = new MarketSession();
+		$this->_session->login(GOOGLE_EMAIL, GOOGLE_PASSWD);
+		$this->_session->setAndroidId(ANDROID_DEVICEID);
+    }
+	
+	/*
+	 * ------------------------
+	 * ---- DETAILS/SEARCH ----
+	 * ------------------------
+	 */
+	
+	/*
+	 * Raw & private because it's content is a response quite unreadable,
+	 * we have to apply for example getResponsegroupArray before returning it
+	 */
+	private function _raw_search_request($str)
+	{
+		$ar = new AppsRequest();
+		$ar->setQuery($str);
+		$ar->setStartIndex(0);
+		$ar->setEntriesCount(10);
+		$ar->setWithExtendedInfo(TRUE);
+		
+		$reqGroup = new Request_RequestGroup();
+		$reqGroup->setAppsRequest($ar);
+		
+		$response = $this->_session->execute($reqGroup);
+		
+		$groups = $response->getResponsegroupArray();
+		
+		return $response;
+	}
+	
+	public function search_request($str)
+	{
+		$response = $this->_raw_search_request($str);
+		
+		$groups = $response->getResponsegroupArray();
+		
+		return $groups;
+	}
+	
+	public function get_one_by_id($str)
+	{
+		$response = $this->_raw_search_request('id:'.$str);
+		
+		if ($response->getResponsegroupCount() > 0)
+		{
+			$a_response = $response->getResponsegroup(0)->getAppsResponse();
+			
+			if ($a_response->getAppCount() == '1')
+			{
+				return $a_response->getApp(0);
+			}
+		}
+
+		return FALSE; // in all other cases
+	}
+	
+	
+	/*
+	 * Following was not tested, but should work fine
+	public function get_comments($id)
+	{
+		$commentsRequest = new CommentsRequest();
+		$commentsRequest->setAppId($id); // an App ID
+		$commentsRequest->setEntriesCount(10);
+		
+		$reqGroup = new Request_RequestGroup();
+		$reqGroup->setCommentsRequest($commentsRequest);
+		
+		$response = $this->_session->execute($reqGroup);
+		
+		return $response;
+	}
+	
+	public function get_screenshots($id)
+	{
+		$gir = new GetImageRequest();
+		$gir->setImageUsage(GetImageRequest_AppImageUsage::SCREENSHOT);
+		$gir->setAppId($id);
+		$gir->setImageId(1);
+		
+		$reqGroup = new Request_RequestGroup();
+		$reqGroup->setImageRequest($gir);
+		$response = $this->_session->execute($reqGroup);
+		
+		$groups = $response->getResponsegroupArray();
+		
+		return $groups;
+	}
+	
+	public function get_categories()
+	{
+		$cr = new CategoriesRequest();
+		
+		$reqGroup = new Request_RequestGroup();
+		$reqGroup->setCategoriesRequest($cr);
+		$response = $this->_session->execute($reqGroup);
+		
+		$groups = $response->getResponsegroupArray();
+
+		return $groups;
+	}
+	*/
+}
+
+/* EOF */

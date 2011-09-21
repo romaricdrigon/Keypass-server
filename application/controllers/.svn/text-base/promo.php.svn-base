@@ -1,0 +1,258 @@
+<?php
+class Promo extends CI_Controller {
+	public function index()
+	{
+		$this->load->model('promo_model');
+		$data['oses'] = $this->_load_os(); // pour le drop-down de choix de l'os
+		$data['promos'] = $this->promo_model->get_promos($this->session->userdata('os'));
+		$data['page'] = 'promo/promo_view';
+		$data['classes'] = $this->_load_classes();
+		
+		$this->load->view('container', $data);
+	}
+
+	// affiche les détails (tous)
+	// TODO : vue à améliorer
+	public function detail($id)
+	{
+		$this->load->model('promo_model');
+		$data['details'] = $this->promo_model->get_promo($id);
+		$data['page'] = 'promo/promo_detail_view';
+		
+		$this->load->view('container', $data);
+	}
+	
+	// attention : sur cette fonction, id est l'id d'une application
+	public function add($id = '')
+	{
+		$this->load->model('promo_model');
+		$data['classes'] = $this->_load_classes();
+		
+		// validation des données
+		$this->form_validation->set_rules('store_id', 'ID du store', 'required');
+		$this->form_validation->set_rules('class', 'Type', 'required|is_numeric');
+		$this->form_validation->set_rules('position', 'Position', 'required|is_numeric');
+		$this->form_validation->set_rules('date_debut', 'Date de d&eacute;but', 'required|callback_date_mysql');
+		$this->form_validation->set_rules('date_fin', 'Date de fin', 'required|callback_date_mysql');
+		$this->form_validation->set_rules('discount', 'Remise', 'required');
+		$this->form_validation->set_rules('price', 'Prix promotionnel', 'required|is_numeric');
+		
+		if ($this->form_validation->run() == TRUE)
+		{
+			// on vérifie si le Gold ou Silver n'est pas déjà pris sur la journée en question
+			$class = $this->input->post('class');
+			if (($class == '1') || ($class == '2'))
+			{
+				if ($this->promo_model->is_class_free($class, $this->input->post('date_debut'), $this->input->post('date_fin')) === TRUE)
+				{
+					$this->session->set_flashdata('alert', 'Une autre promotion de m&ecirc;me type existe d&eacute;j&agrave; sur cette p&eacute;riode. '.back_button());
+					redirect('promo');
+				}
+			}
+			
+			$query_data = array(
+				'prm_class' => $class,
+				'prm_position' => $this->input->post('position'),
+				'prm_date_debut' => $this->input->post('date_debut'),
+				'prm_date_fin' => $this->input->post('date_fin'),
+				'prm_discount' => $this->input->post('discount'),
+				'prm_price' => $this->input->post('price')
+			);
+			$this->promo_model->add_promo($query_data, $this->input->post('store_id'));
+			
+			$this->session->set_flashdata('success', 'Promotion ajout&eacute;e !');
+			
+			redirect('promo');
+		}
+		else
+		{
+			$data['page'] = 'promo/promo_add_view';
+			$data['id'] = $id;
+			$this->load->view('container', $data);
+		}		
+	}
+	
+	public function modify($id = -1)
+	{
+		$this->load->model('promo_model');
+		$data['classes'] = $this->_load_classes();
+		
+		if ($id == -1)
+		{
+			$id = $this->input->post('id');
+		}
+		
+		// validation des données
+		$this->form_validation->set_rules('store_id', 'ID du store', 'required');
+		$this->form_validation->set_rules('class', 'Type', 'required|is_numeric');
+		$this->form_validation->set_rules('position', 'Position', 'required|is_numeric');
+		$this->form_validation->set_rules('date_debut', 'Date de d&eacute;but', 'required|callback_date_mysql');
+		$this->form_validation->set_rules('date_fin', 'Date de fin', 'required|callback_date_mysql');
+		$this->form_validation->set_rules('discount', 'Remise', 'required');
+		$this->form_validation->set_rules('price', 'Prix promotionnel', 'required|is_numeric');
+		
+		if ($this->form_validation->run() == TRUE)
+		{
+			// on vérifie si le Gold ou Silver n'est pas déjà pris sur la journée en question
+			$class = $this->input->post('class');
+			if (($class == '1') || ($class == '2'))
+			{
+				if ($this->promo_model->is_class_free($class, $this->input->post('date_debut'), $this->input->post('date_fin')) === TRUE)
+				{
+					$this->session->set_flashdata('alert', 'Une autre promotion de m&ecirc;me type existe d&eacute;j&agrave; sur cette p&eacute;riode. '.back_button());
+					redirect('promo');
+				}
+			}
+			
+			$query_data = array(
+				'prm_class' => $class,
+				'prm_position' => $this->input->post('position'),
+				'prm_date_debut' => $this->input->post('date_debut'),
+				'prm_date_fin' => $this->input->post('date_fin'),
+				'prm_discount' => $this->input->post('discount'),
+				'prm_price' => $this->input->post('price')
+			);
+			$this->promo_model->modify_promo($id, $query_data);
+			
+			$this->session->set_flashdata('success', 'Promotion modifi&eacute;e !');
+			
+			redirect('promo');
+		}
+		else
+		{
+			$temp = $this->promo_model->get_promo($id);
+			$data['position'] = $temp['prm_position'];
+			$data['class'] = $temp['prm_class'];
+			$data['date_debut'] = date_mysql($temp['prm_date_debut'], 'fr');
+			$data['date_fin'] = date_mysql($temp['prm_date_fin'], 'fr');
+			$data['discount'] = $temp['prm_discount'];
+			$data['price'] = $temp['prm_price'];
+			$data['store_id'] = $temp['app_store_id'];
+			$data['id'] = $id;
+			
+			$data['page'] = 'promo/promo_modify_view';
+			$this->load->view('container', $data);
+		}
+	}
+
+	public function delete($id)
+	{
+		$this->load->model('promo_model');
+		
+		$this->promo_model->delete_promo($id);
+		redirect('promo');
+	}
+
+	/*
+	 * Vue calendrier,
+	 * ça c'est un truc cool
+	 */
+	public function calendar()
+	{
+		$this->load->model('promo_model');
+		
+		// on récupère les données des form, regarde si ce n'est pas vide
+		$annee = $this->input->post('annee');
+		$year = ($annee=='')?date('Y'):$annee;
+		$mois = $this->input->post('mois');
+		$month = ($mois=='')?date('m'):$mois;
+		
+		// on créé le tableau des jours du mois qui va contenir les promos
+		$month_name = date('F', mktime(0, 0, 0, $month, 1, $year));
+		$nb_days = date('t', mktime(0, 0, 0, $month, 1, $year));
+		
+		// pré-remplissage du tableau
+		// il faut créer chaque ligne (sinon le jour ne s'affichera pas)
+		// et mettre un contenu par défaut
+		for ($i=1;$i<=$nb_days;$i++)
+		{
+			$promo_by_day[$i] = array(
+									'1' => '<span class="null_gold"></span>',
+									'2' => '<span class="null_silver"></span>',
+									'3' => '' // Bronze, pas de contraintes, pas besoin de mettre une alert
+								);
+		}
+		
+		/*
+		 * If you're here, I want to let you know that I am very very sorry about this
+		 * It was my last practice day
+		 */
+		
+		// on récupère toutes les promos
+		$promos = $this->promo_model->get_period_promo($year.'-'.$month.'-01', $year.'-'.$month.'-'.$nb_days);
+		
+		// on va ajouter les promos, une à une, dans le tableau des jours
+		foreach ($promos as $promo)
+		{
+			$date_debut = explode('-', $promo['prm_date_debut']);
+			$date_fin = explode('-', $promo['prm_date_fin']);
+			
+			// si on a des promos qui commencent le mois d'avant, on rogne au 1er
+			if ($date_debut[1] < $month || $date_debut[0] < $year)
+			{
+				$date_debut[1] = $month;
+				$date_debut[2] = '1';
+			}
+						
+			// si on a des promos qui finissent un mois ultérieur, on tronque au 30/31
+			if ($date_fin[1] > $month || $date_fin[0] > $year)
+			{
+				$date_fin[1] = $month;
+				$date_fin[2] = $nb_days;
+			}
+			
+			// maintenant on charge notre tableau $promo_by_day
+			// on fait un cast (int) pour enlever le 0 inutile (par ex. 01), sinon qui risque de poser des problèmes
+			for ($j=(int)$date_debut[2];$j<=(int)$date_fin[2];$j++)
+			{
+				$text = '<a href="detail/'.$promo['prm_id'].'">'.$promo['app_title'].'</a>'; // le contenu d'une cellule : lien vers le détail de la promo
+				($promo['prm_class']=='3')? $promo_by_day[$j][$promo['prm_class']] .= $text.' ; ': $promo_by_day[$j][$promo['prm_class']] = $text;
+			}
+		}
+
+		ksort($promo_by_day); // key-sort : tri suivant la valeur des clés
+
+		$data['promos'] = $promo_by_day;
+		$data['month_name'] = $month_name;
+		$data['year'] = $year;
+		$data['page'] = 'promo/promo_calendar_view';
+		$this->load->view('container', $data);
+	}
+	
+	/*
+	 * Fonctions internes
+	 */
+	// pour charger le contenu du dropdown permettant de changer d'OS
+	// @param : $no_all, bool, pas de clé tous
+	private function _load_os($no_all = FALSE)
+	{
+		$this->load->model('os_model'); // nécessaire pour le drop-down
+		
+		$this->_os_selected = $this->session->userdata('os'); // on récupère le choix du menu déroulant
+		
+		$systems = $this->os_model->get_oses();
+		($no_all !== TRUE) && ($data['oses'] = array('all' => 'Tous')); // on rajoute une clé 'tous'
+		foreach ($systems as $system) {
+			$data['oses'][$system['os_id']] = $system['os_nice_name'];
+		}	
+		
+		return $data['oses'];
+	}
+	// charge les 3 classes possibles : Gold, Silver, Bronze
+	private function _load_classes()
+	{
+		$classes = array(
+					'1' => 'Gold',
+					'2' => 'Silver',
+					'3' => 'Bronze'
+					);
+					
+		return $classes;
+	}
+
+	public function date_mysql($DateMysql) {
+		return date_mysql($DateMysql); // appelle la fonction du helper
+	}
+}
+
+/* EOF */

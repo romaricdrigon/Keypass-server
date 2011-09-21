@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn-publishing/!svn/ver/283/HTML5/AppsFan_BackEnd/system/database/drivers/oci8
+END
+oci8_driver.php
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn-publishing/!svn/ver/283/HTML5/AppsFan_BackEnd/system/database/drivers/oci8/oci8_driver.php
+END
+oci8_result.php
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn-publishing/!svn/ver/283/HTML5/AppsFan_BackEnd/system/database/drivers/oci8/oci8_result.php
+END
+index.html
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn-publishing/!svn/ver/283/HTML5/AppsFan_BackEnd/system/database/drivers/oci8/index.html
+END
+oci8_forge.php
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn-publishing/!svn/ver/283/HTML5/AppsFan_BackEnd/system/database/drivers/oci8/oci8_forge.php
+END
+oci8_utility.php
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn-publishing/!svn/ver/283/HTML5/AppsFan_BackEnd/system/database/drivers/oci8/oci8_utility.php
+END

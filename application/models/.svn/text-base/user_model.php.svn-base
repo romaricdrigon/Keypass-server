@@ -1,0 +1,167 @@
+<?php
+class User_model extends CI_Model {
+	private $_salt = 'ss58ncstBPHacmcB0ZAz3I4WQa6S';
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+	
+	/*
+	 * Pour récupérer la liste des utilisateurs
+	 */
+	public function get_users()
+	{
+		// for documentation purpose : les deux écritures sont équivalentes, une pur SQL l'autre Active Records
+		//$query = $this->db->query('SELECT usr_login, usr_email, usr_level FROM user');
+		$this->db->select('usr_id, usr_login, usr_email, usr_level')->from('admin_user');
+		$query = $this->db->get();
+		
+		return $query->result_array();
+	}
+
+	/*
+	 * CRUD avec un item
+	 */
+	public function get_user($id)
+	{
+		$this->db->select('usr_id, usr_login, usr_email, usr_level, usr_receive_alert')->from('admin_user')->where('usr_id', $id);
+		$query = $this->db->get();
+		
+		return $query->row_array();
+	}
+	public function add_user($data)
+	{
+		$this->db->insert('admin_user', $data);
+	}
+	public function modify_user($id, $data)
+	{
+		$this->db->where('usr_id', $id);
+		$this->db->update('admin_user', $data);
+	}
+	public function delete_user($id)
+	{
+		$this->db->delete('admin_user', array('usr_id' => $id)); 
+	}
+	
+	/*
+	 * Permet de checker si un user est connecté
+	 */
+	public function is_logged()
+	{
+		if ($this->session->userdata('logged_in'))
+		{
+			 return TRUE;
+		} else {
+			return FALSE;
+		}
+	}
+	
+	/*
+	 * Fonction permettant de vérifier s'il reste un seul utilisateur
+	 * Renvoie un booléen
+	 */
+	public function last_user()
+	{
+		$this->db->select('usr_id')->from('admin_user');
+		$query = $this->db->get();
+		
+		if ($query->num_rows() == 1)
+		{
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+	}
+	
+	/*
+	 * Permet de checker un couple user/mdp
+	 */
+	public function valid_credentials($username, $password)
+	{
+		$this->load->helper('security');	
+	    $password = $this->hash_password($password);
+	
+	    // requête préparée, beaucoup plus sécurisé et rapide
+	    $q = "SELECT * FROM admin_user WHERE usr_login = ? AND usr_password = ?";
+	    $data = array($username, $password);
+	    $q = $this->db->query($q, $data);
+	
+	    if ($q->num_rows() > 0)
+	    {
+	    	$r = $q->row_array();
+			
+	    	$session_data = array(
+	    					'username' => $r['usr_login'],
+	    					'user_id' => $r['usr_id'],
+	    					'logged_in' => TRUE,
+							'user_level' => $r['usr_level']
+							);
+	     	$this->session->set_userdata($session_data);
+			
+	    	return TRUE;
+	    } else {
+	    	return FALSE;
+		}
+	}
+
+	/*
+	 * Construit un hash du password : SHA1 + salt
+	 */
+	public function hash_password($password)
+	{
+		$this->load->helper('security');
+		$password = do_hash(($this->_salt).$password);
+		
+		return $password;
+	}
+	
+	/*
+	 * Récupère la liste des admins devant être prévenus par mail,
+	 * sous forme d'un tableau
+	 */
+	public function get_users_to_alert()
+	{
+		$this->db->select('usr_email')->from('user')->where('usr_receive_alert', '1');
+		$query = $this->db->get();
+		
+		return $query->row_array();		
+	}
+	
+	/*
+	 * Vérifie si l'user actuellement loggé a bien
+	 * les privilèges nécessaires pour être sur cette page
+	 */
+	public function has_right()
+	{
+		$autor_rights = array('app', 'promo', 'welcome', 'login');
+		$editor_rights = array();
+		$admin_rights = array('user');
+		$root_rights = array('os');
+		
+		$level = $this->session->userdata('user_level');
+		
+		$controller = $this->router->class;
+		
+		if (($level == 10) && (in_array($controller, $root_rights)))
+		{
+			return TRUE;
+		}
+		else if (($level >= 8) && (in_array($controller, $admin_rights)))
+		{
+			return TRUE;
+		}
+		else if (($level >= 5) && (in_array($controller, $editor_rights)))
+		{
+			return TRUE;
+		}
+		else if (($level >= 1) && (in_array($controller, $autor_rights)))
+		{
+			return TRUE;
+		}
+		
+		return FALSE;
+	}
+
+}
+/* EOF */
