@@ -79,8 +79,42 @@ class Request extends CI_Controller {
 		}
 	}
 
+	public function modify_section()
+	{
+		$title = $this->input->post('title');
+		$id = $this->input->post('id');
+		$user = $this->input->post('user');
+		$key = $this->input->post('key');
+		
+		if (strlen($title) == 0 || strlen($user) == 0 || strlen($key) == 0 || strlen($id) == 0)
+		{
+			die("Missing parameter");
+		}
+
+		if (is_numeric($id) == FALSE)
+		{
+			die("Wrong id");
+		}
+		
+		if (base64_decode($title, TRUE) === FALSE)
+		{
+			die("Wrong encoding");
+		}
+		
+		$this->load->model('request_model');
+		
+		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		{
+			echo $this->request_model->modify_section($id, $title);
+		}
+		else
+		{
+			die("Invalid credentials");
+		}
+	}
+
 	/*
-	 * Modifier un item, on ne sait pas quoi c'est crypté !
+	 * Supprimer une section
 	 */
 	public function remove_section()
 	{

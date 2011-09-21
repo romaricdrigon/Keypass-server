@@ -36,6 +36,11 @@ class Request_model extends CI_Model {
 		// on récupère l'id de l'enregistrement que l'on vient de faire
 		return mysql_insert_id();
 	}
+	public function modify_section($id, $data)
+	{
+		$this->db->where('key_id', $id);
+		$this->db->update('key_data', array('key_title' => $data));
+	}
 	public function delete_section($id)
 	{
 		$this->db->delete('key_data', array('key_id' => $id)); 
