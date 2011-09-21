@@ -78,18 +78,17 @@ class Request extends CI_Controller {
 			die("Invalid credentials");
 		}
 	}
-	
+
 	/*
 	 * Modifier un item, on ne sait pas quoi c'est crypté !
 	 */
-	public function change_data()
+	public function remove_section()
 	{
-		$content = $this->input->post('content');
 		$id = $this->input->post('id');
 		$user = $this->input->post('user');
 		$key = $this->input->post('key');
 		
-		if (strlen($content) == 0 || strlen($id) == 0/* || strlen($user) == 0 || strlen($key) == 0*/)
+		if (strlen($id) == 0 || strlen($user) == 0 || strlen($key) == 0)
 		{
 			die("Missing parameter");
 		}
@@ -101,14 +100,48 @@ class Request extends CI_Controller {
 		
 		$this->load->model('request_model');
 		
-		//if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		{
+			$this->request_model->delete_section($id);
+			
+			echo 'Operation done';
+		}
+		else
+		{
+			die("Invalid credentials");
+		}
+	}
+	
+	/*
+	 * Modifier un item, on ne sait pas quoi c'est crypté !
+	 */
+	public function change_data()
+	{
+		$content = $this->input->post('content');
+		$id = $this->input->post('id');
+		$user = $this->input->post('user');
+		$key = $this->input->post('key');
+		
+		if (strlen($content) == 0 || strlen($id) == 0 || strlen($user) == 0 || strlen($key) == 0)
+		{
+			die("Missing parameter");
+		}
+		
+		if (is_numeric($id) == FALSE)
+		{
+			die("Wrong id");
+		}
+		
+		$this->load->model('request_model');
+		
+		if ($this->request_model->valid_credentials($user, $key) === TRUE)
 		{
 			$this->request_model->change_item($id, $content);
 		}
-		/*else
+		else
 		{
 			die("Invalid credentials");
-		}*/
+		}
 	}
 
 }
