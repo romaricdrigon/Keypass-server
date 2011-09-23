@@ -137,8 +137,6 @@ class Request extends CI_Controller {
 		if ($this->request_model->valid_credentials($user, $key) === TRUE)
 		{
 			$this->request_model->delete_section($id);
-			
-			echo 'Operation done';
 		}
 		else
 		{
