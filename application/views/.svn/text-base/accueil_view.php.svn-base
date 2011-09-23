@@ -1,3 +1,0 @@
-<p>Bien le bonjour, cher visiteur !</p>
-<br />
-<img src=<?php echo base_url('images/welcome.jpg'); ?> />
