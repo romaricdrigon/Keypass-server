@@ -19,6 +19,8 @@ Then you have to set the server url in /application/config/config.php (you may w
 
 Finaly, you have to edit /.htaccess, to set the correct RewriteBase (the name of the folder where the app is).
 
+You can't access the root of the application, it's all right. You can try to go to /request/change_data, you should see a message like "missing parameter"
+
 
 ****** License ******
 
