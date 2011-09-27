@@ -15,6 +15,8 @@ I've used Code Igniter framework.
 You have to set up a MySQL database. Then dump in 'database.sql'
 You have to edit its information in /application/config/database.php
 
+Then you have to set the server url in /application/config/config.php (you may want to take a deeper look at this file).
+
 Finaly, you have to edit /.htaccess, to set the correct RewriteBase (the name of the folder where the app is).
 
 
