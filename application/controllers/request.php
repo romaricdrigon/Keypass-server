@@ -24,13 +24,13 @@ class Request extends CI_Controller {
 		
 		if (strlen($user) == 0 || strlen($key) == 0)
 		{
-			die("Missing parameter");
+			die('Missing parameter');
 		}
 		
 		// oui, en Php il faut vraiment faire ça, avec strict à TRUE, pour tester si c'est bien du base64 !
 		if (base64_decode($key, TRUE) === FALSE)
 		{
-			die("Wrong encoding");
+			die('Wrong encoding');
 		}
 		
 		$this->load->model('request_model');
@@ -44,7 +44,7 @@ class Request extends CI_Controller {
 		}
 		else
 		{
-			die("Invalid credentials");
+			die('Invalid credentials');
 		}
 	}
 	
@@ -59,12 +59,12 @@ class Request extends CI_Controller {
 		
 		if (strlen($title) == 0 || strlen($user) == 0 || strlen($key) == 0)
 		{
-			die("Missing parameter");
+			die('Missing parameter');
 		}
 		
 		if (base64_decode($title, TRUE) === FALSE)
 		{
-			die("Wrong encoding");
+			die('Wrong encoding');
 		}
 		
 		$this->load->model('request_model');
@@ -75,7 +75,7 @@ class Request extends CI_Controller {
 		}
 		else
 		{
-			die("Invalid credentials");
+			die('Invalid credentials');
 		}
 	}
 
@@ -88,17 +88,17 @@ class Request extends CI_Controller {
 		
 		if (strlen($title) == 0 || strlen($user) == 0 || strlen($key) == 0 || strlen($id) == 0)
 		{
-			die("Missing parameter");
+			die('Missing parameter');
 		}
 
 		if (is_numeric($id) == FALSE)
 		{
-			die("Wrong id");
+			die('Wrong id');
 		}
 		
 		if (base64_decode($title, TRUE) === FALSE)
 		{
-			die("Wrong encoding");
+			die('Wrong encoding');
 		}
 		
 		$this->load->model('request_model');
@@ -109,7 +109,7 @@ class Request extends CI_Controller {
 		}
 		else
 		{
-			die("Invalid credentials");
+			die('Invalid credentials');
 		}
 	}
 
@@ -124,12 +124,12 @@ class Request extends CI_Controller {
 		
 		if (strlen($id) == 0 || strlen($user) == 0 || strlen($key) == 0)
 		{
-			die("Missing parameter");
+			die('Missing parameter');
 		}
 		
 		if (is_numeric($id) == FALSE)
 		{
-			die("Wrong id");
+			die('Wrong id');
 		}
 		
 		$this->load->model('request_model');
@@ -140,7 +140,7 @@ class Request extends CI_Controller {
 		}
 		else
 		{
-			die("Invalid credentials");
+			die('Invalid credentials');
 		}
 	}
 	
@@ -156,12 +156,12 @@ class Request extends CI_Controller {
 		
 		if (strlen($content) == 0 || strlen($id) == 0 || strlen($user) == 0 || strlen($key) == 0)
 		{
-			die("Missing parameter");
+			die('Missing parameter');
 		}
 		
 		if (is_numeric($id) == FALSE)
 		{
-			die("Wrong id");
+			die('Wrong id');
 		}
 		
 		$this->load->model('request_model');
@@ -172,8 +172,50 @@ class Request extends CI_Controller {
 		}
 		else
 		{
-			die("Invalid credentials");
+			die('Invalid credentials');
 		}
+	}
+	
+	/*
+	 * Change credentials
+	 * and so all encrypted content
+	 */
+	public function credentials_changed()
+	{
+		$user = $this->input->post('user');
+		$key = $this->input->post('key');
+		// new data
+		$new_user = $this->input->post('newUser');
+		$new_key = $this->input->post('newKey');
+		$new_content = $this->input->post('newContent');
+
+		
+		if (strlen($user) == 0 || strlen($key) == 0 || strlen($new_user) == 0 || strlen($new_key) == 0 || strlen($new_content) == 0)
+		{
+			die('Missing parameter');
+		}
+		
+		$this->load->model('request_model');
+		
+		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		{
+			// decode given JSON
+			$content = json_decode($new_content, true);
+			
+			if ($content === NULL) // our decoding failed
+			{
+				die('Invalid JSON');
+			}
+			
+			$this->request_model->change_credentials($user, $key, $new_user, $new_key);
+			$this->request_model->change_all_items($content);
+			
+			exit('success');
+		}
+		else
+		{
+			die('Invalid credentials');
+		}		
 	}
 
 }

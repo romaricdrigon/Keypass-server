@@ -58,6 +58,27 @@ class Request_model extends CI_Model {
 		$this->db->update('key_data', array('key_blop' => $data));
 	}
 
+	/*
+	 * Change credentials
+	 * We need old ones to find the record
+	 */
+	public function change_credentials($user, $key, $new_user, $new_key) {
+		$this->db->where('usr_user', $user)->where('usr_password', $key);
+		$this->db->update('key_user', array('usr_user' => $new_user, 'usr_password' => $new_key));
+	}
+
+	/*
+	 * Change all sections
+	 * receive an associative array
+	 */
+	public function change_all_items($content)
+	{
+		foreach ($content as $blop)
+		{
+			$this->db->where('key_id', $blop['id']);
+			$this->db->update('key_data', array('key_title' => $blop['title'], 'key_blop' => $blop['content']));
+		}
+	}
 
 }
 

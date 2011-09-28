@@ -27,7 +27,7 @@ CREATE TABLE `key_data` (
   `key_title` text NOT NULL,
   `key_blop` text NOT NULL,
   PRIMARY KEY (`key_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=13 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 -- --------------------------------------------------------
@@ -41,5 +41,6 @@ CREATE TABLE `key_user` (
   `usr_password` text NOT NULL,
   `usr_id` int(11) NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`usr_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
+INSERT INTO `key_user` VALUES('admin', '"N8Hv0jK9Q5InD0jP+YkHo3LD60E="', 2);
