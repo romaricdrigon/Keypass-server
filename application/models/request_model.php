@@ -18,7 +18,7 @@ class Request_model extends CI_Model {
 	    $q = $this->db->query($q, array($username));
 		$r = $q->row_array(); // on récupère le 1er résultat
 	
-	    if ($r['usr_password'] == $key)
+	    if (isset($r['usr_password']) && $r['usr_password'] == $key)
 	    {			
 	    	return TRUE;
 	    } else {
