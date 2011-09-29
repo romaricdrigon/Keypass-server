@@ -22,6 +22,13 @@ Finaly, you have to edit /.htaccess, to set the correct RewriteBase (the name of
 You can't access the root of the application, it's all right. You can try to go to /request/change_data, you should see a message like "missing parameter"
 
 
+****** Multi-users ******
+
+You can set several accounts. Each one will have access to his owns data (but now way to access others', because you need the password to decrypt).
+To add another user, add an entry in key_user, usr_id because auto-incremented, with a different usr_user, and a password:
+the easiest way is to set password to the same value than the first user, and then change it from the application.
+
+
 ****** License ******
 
 Feel free to use, re-use it. I make no warranties about my code.

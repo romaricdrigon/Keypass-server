@@ -35,10 +35,11 @@ class Request extends CI_Controller {
 		
 		$this->load->model('request_model');
 		
-		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		$user_id = $this->request_model->valid_credentials($user, $key);
+		if ($user_id !== FALSE)
 		{
 			// get all
-			$data = $this->request_model->get_blops();
+			$data = $this->request_model->get_blops($user_id);
 			
 			echo json_encode($data);
 		}
@@ -69,9 +70,10 @@ class Request extends CI_Controller {
 		
 		$this->load->model('request_model');
 		
-		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		$user_id = $this->request_model->valid_credentials($user, $key);
+		if ($user_id !== FALSE)
 		{
-			echo $this->request_model->add_section($title);
+			echo $this->request_model->add_section($user_id, $title);
 		}
 		else
 		{
@@ -103,9 +105,10 @@ class Request extends CI_Controller {
 		
 		$this->load->model('request_model');
 		
-		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		$user_id = $this->request_model->valid_credentials($user, $key);
+		if ($user_id !== FALSE)
 		{
-			echo $this->request_model->modify_section($id, $title);
+			echo $this->request_model->modify_section($user_id, $id, $title);
 		}
 		else
 		{
@@ -134,9 +137,10 @@ class Request extends CI_Controller {
 		
 		$this->load->model('request_model');
 		
-		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		$user_id = $this->request_model->valid_credentials($user, $key);
+		if ($user_id !== FALSE)
 		{
-			$this->request_model->delete_section($id);
+			$this->request_model->delete_section($user_id, $id);
 		}
 		else
 		{
@@ -166,9 +170,10 @@ class Request extends CI_Controller {
 		
 		$this->load->model('request_model');
 		
-		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		$user_id = $this->request_model->valid_credentials($user, $key);
+		if ($user_id !== FALSE)
 		{
-			$this->request_model->change_item($id, $content);
+			$this->request_model->change_item($user_id, $id, $content);
 		}
 		else
 		{
@@ -197,7 +202,8 @@ class Request extends CI_Controller {
 		
 		$this->load->model('request_model');
 		
-		if ($this->request_model->valid_credentials($user, $key) === TRUE)
+		$user_id = $this->request_model->valid_credentials($user, $key);
+		if ($user_id !== FALSE)
 		{
 			// decode given JSON
 			$content = json_decode($new_content, true);
@@ -207,8 +213,8 @@ class Request extends CI_Controller {
 				die('Invalid JSON');
 			}
 			
-			$this->request_model->change_credentials($user, $key, $new_user, $new_key);
-			$this->request_model->change_all_items($content);
+			$this->request_model->change_credentials($user_id, $user, $key, $new_user, $new_key);
+			$this->request_model->change_all_items($user_id, $content);
 			
 			exit('success');
 		}
