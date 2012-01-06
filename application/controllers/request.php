@@ -223,6 +223,71 @@ class Request extends CI_Controller {
 			die('Invalid credentials');
 		}		
 	}
+	
+	/*
+	 * Download a database backup
+	 * The user must be valid, so anyone can't download the database
+	 * but a valid user will download the whole databse (but encrypted)
+	 * @params:
+	 *  - user
+	 *  - key
+	 *  - do_download : if TRUE, return a download link
+	 *  - do_file : if TRUE, a backup in created in /backup directory
+	 */
+	public function backup()
+	{
+		$user = $this->input->post('user');
+		$key = $this->input->post('key');
+		$do_download = $this->input->post('do_download');
+		$do_file = $this->input->post('do_file');
+		
+		if (strlen($user) == 0 || strlen($key) == 0)
+		{
+			die('Missing parameter');
+		}
+		
+		// oui, en Php il faut vraiment faire ça, avec strict à TRUE, pour tester si c'est bien du base64 !
+		if (base64_decode($key, TRUE) === FALSE)
+		{
+			die('Wrong encoding');
+		}
+		
+		
+		if (is_bool($do_download) == FALSE || is_bool($do_file) == FALSE)
+		{
+			die('Missing or invalid parameter');
+		}
+		
+		$this->load->model('request_model');
+		
+		$user_id = $this->request_model->valid_credentials($user, $key);
+		if ($user_id !== FALSE)
+		{
+			// no need for a model, pretty straighforward
+			$this->load->dbutil();
+			
+			$backup =& $this->dbutil->backup(); 
+			
+			if ($do_file == TRUE) {
+				// store teh backup as a file on the server
+				$this->load->helper('file');
+				
+				write_file('/backup/'.date('Y-m-d_H:i:s').'.gz', $backup); 
+			}
+			
+			if ($do_download == TRUE) {
+				// Load the download helper and send the file to your desktop
+				$this->load->helper('download');
+				force_download('keypasse_'.date('Y-m-d_H:i:s').'.gz', $backup);
+				
+				//echo json_encode($data);
+			}
+		}
+		else
+		{
+			die('Invalid credentials');
+		}
+	}
 
 }
 
