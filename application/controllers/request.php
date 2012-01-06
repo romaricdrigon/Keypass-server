@@ -232,14 +232,12 @@ class Request extends CI_Controller {
 	 *  - user
 	 *  - key
 	 *  - doDownload : if TRUE, return a download link
-	 *  - doFile : if TRUE, a backup in created in /backup directory
 	 */
 	public function backup()
 	{
 		$user = $this->input->post('user');
 		$key = $this->input->post('key');
 		$do_download = (bool) $this->input->post('doDownload');
-		$do_file = (bool) $this->input->post('doFile');
 		
 		if (strlen($user) == 0 || strlen($key) == 0)
 		{
@@ -253,9 +251,9 @@ class Request extends CI_Controller {
 		}
 		
 		
-		if (is_bool($do_download) == FALSE || is_bool($do_file) == FALSE)
+		if (is_bool($do_download) == FALSE)
 		{
-			die('Missing or invalid parameter'.$do_download.'-'.$do_file);
+			die('Missing or invalid parameter');
 		}
 		
 		$this->load->model('request_model');
@@ -268,19 +266,18 @@ class Request extends CI_Controller {
 			
 			$backup =& $this->dbutil->backup(); 
 			
-			if ($do_file == TRUE)
-			{
-				// store the backup as a file on the server
-				$this->load->helper('file');
-				
-				$bool = write_file('/backup/keypass_'.date('Y-m-d_H:i:s').'.gz', $backup); 
-			}
+			// store the backup as a file on the server
+			$this->load->helper('file');
+			
+			$bool = write_file('backup/keypass_'.date('Y-m-d_H-i-s').'.gz', $backup); 
 			
 			if ($do_download == TRUE)
 			{
 				// Load the download helper and send the file to your desktop
-				$this->load->helper('download');
-				force_download('keypasse_'.date('Y-m-d_H:i:s').'.gz', $backup);
+				//$this->load->helper('download');
+				//force_download('keypasse_'.date('Y-m-d_H:i:s').'.gz', $backup);
+				$this->load->helper('url');
+				echo site_url('backup/keypass_'.date('Y-m-d_H-i-s').'.gz');
 			}
 		}
 		else
