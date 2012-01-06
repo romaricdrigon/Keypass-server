@@ -17,7 +17,7 @@ You have to edit its information in /application/config/database.php
 
 Then you have to set the server url in /application/config/config.php (you may want to take a deeper look at this file).
 
-Set Chmod 755 (so Php can write files) to /backup/ folder.
+Set Chmod 755 (so PHP can write files, it may be 777 for some servers) to /backup/ folder.
 
 Finaly, you have to edit /.htaccess, to set the correct RewriteBase (the name of the folder where the app is).
 
