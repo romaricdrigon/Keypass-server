@@ -231,7 +231,7 @@ class Request extends CI_Controller {
 	 * @params:
 	 *  - user
 	 *  - key
-	 *  - doDownload : if TRUE, return a download link
+	 *  - doDownload : if TRUE, return a file
 	 */
 	public function backup()
 	{
@@ -268,16 +268,15 @@ class Request extends CI_Controller {
 			
 			// store the backup as a file on the server
 			$this->load->helper('file');
-			
-			$bool = write_file('backup/keypass_'.date('Y-m-d_H-i-s').'.gz', $backup); 
+			write_file('backup/keypass_'.date('Y-m-d_H-i-s').'.gz', $backup); 
 			
 			if ($do_download == TRUE)
 			{
 				// Load the download helper and send the file to your desktop
-				//$this->load->helper('download');
-				//force_download('keypasse_'.date('Y-m-d_H:i:s').'.gz', $backup);
-				$this->load->helper('url');
-				echo site_url('backup/keypass_'.date('Y-m-d_H-i-s').'.gz');
+				$this->load->helper('download');
+				force_download('keypasse_'.date('Y-m-d_H:i:s').'.gz', $backup);
+				/*$this->load->helper('url');
+				echo site_url('backup_download/download_'.);*/
 			}
 		}
 		else

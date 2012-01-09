@@ -1,0 +1,2 @@
+# dir can't be accessed via Http
+Deny from all
